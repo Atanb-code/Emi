@@ -105,39 +105,145 @@ QDRANT_URL=[http://127.0.0.1:6333](http://127.0.0.1:6333)
 
 ```
 
-### 3. Knowledge Base Ingestion
+## 🐳 Container Infrastructure Setup (Docker)
 
-Place municipal health documents (such as *Profil Kesehatan Kota Semarang 2024*) inside `./data_awal/` and execute the indexing notebook:
+Emi relies on Docker to orchestrate the Vector Database (Qdrant) and Relational Database (PostgreSQL) in an isolated edge environment[cite: 7].
 
+### 1. Install Docker Engine
+
+**Ubuntu / WSL2:**
 ```bash
-jupyter notebook mem_fill_GOT_2.ipynb
+# Install official Docker Engine
+curl -fsSL [https://get.docker.com](https://get.docker.com) -o get-docker.sh
+sudo sh get-docker.sh
+
+# Enable non-root Docker management
+sudo usermod -aG docker $USER
+newgrp docker
 
 ```
 
-Execute all cells to extract markdown tables via GOT-OCR 2.0 and index chunked embeddings into Qdrant.
+**Windows / macOS:**
 
-### 4. Launch Backend API
+* Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+* In Docker Desktop settings, verify that **Use the WSL 2 based engine** is active under **Settings** $\rightarrow$ **General** $\rightarrow$ **WSL Integration**.
 
-Start the FastAPI server:
+---
+
+### 2. Deploy Containers via Docker Compose
+
+Launch the Qdrant vector engine and PostgreSQL database with a single command:
 
 ```bash
-uvicorn emi_api11:app --host 0.0.0.0 --port 8000
+# Start containers in detached mode
+docker compose up -d
+
+# Verify container status
+docker compose ps
 
 ```
 
-* **API Service:** `http://127.0.0.1:8000`
+| Service | Container Name | Host Ports | Purpose |
+| --- | --- | --- | --- |
+| **Qdrant** | `emi_qdrant` | `6333`, `6334` | Vector Database for RAG knowledge retrieval (`emi_knowledge`) |
+| **PostgreSQL** | `emi_postgres` | `5432` | Relational logging of chats, ratings, and evaluation reports (`emi_db`) |
 
-* **Phoenix CCTV Tracing:** `http://127.0.0.1:6006`
+---
+
+## 🌐 Edge-to-Cloud Funneling (Tailscale & Streamlit Cloud)
+
+To deploy the Streamlit frontend publicly on **Streamlit Community Cloud** while keeping the inference backend, database, and models strictly local on your edge hardware, use **Tailscale Funnel** to establish a secure public HTTPS endpoint without port forwarding.
+
+---
+
+### 1. Configure Tailscale Funnel on Local Machine (WSL2 / Linux)
+
+1. Install and authenticate [Tailscale](https://tailscale.com/):
+   ```bash
+   curl -fsSL [https://tailscale.com/install.sh](https://tailscale.com/install.sh) | sh
+   sudo tailscale up
 
 
-### 5. Launch Frontend UI
+2. Enable **Funnel** in your [Tailscale Admin Console](https://www.google.com/search?q=https://login.tailscale.com/admin/features) under **Access Controls** (grant `funnel` attribute for your node).
 
-In a separate terminal, start the Streamlit chat client:
-
+3. Expose the local FastAPI port via Tailscale Funnel in background mode:
 ```bash
-streamlit run app.py
+tailscale funnel --bg 8000
+```
+
+
+4. Retrieve your public Tailscale HTTPS domain:
+```bash
+tailscale funnel status
 
 ```
+*Expected output: `https://node-name.your-tailnet.ts.net*`
+
+---
+
+### 2. Deploy Frontend on Streamlit Community Cloud
+
+1. Log in to [Streamlit Community Cloud](https://share.streamlit.io/) and click **New app**.
+2. Select your repository, branch (`main`), and target file (`streamlit_emi.py`).
+3. Under **Advanced settings** $\rightarrow$ **Secrets**, configure your public Tailscale backend URL:
+
+```toml
+# Streamlit Cloud Secrets (.streamlit/secrets.toml)
+API_URL = "https://node-name.your-tailnet.ts.net/chat"
+API_URL_STREAM = "https://node-name.your-tailnet.ts.net/chat_stream"
+url_tts = "https://node-name.your-tailnet.ts.net/ngomong"
+```
+
+4. Click **Deploy**. The cloud-hosted frontend will now route prompts directly to your local edge-AI inference engine over encrypted TLS.
+
+
+## 📚 Knowledge Base Ingestion & Vector "Rack" Construction
+
+Follow these steps to initialize collections and ingest municipal health profiles or medical literature into Qdrant.
+
+### 1. Document Preparation
+
+Create the source directory and deposit all reference PDF files (e.g., *Profil Kesehatan Kota Semarang 2024*, PTM clinical guidelines, or empirical health journals):
+
+```bash
+mkdir -p data_awal
+# Move all source PDF files into ./data_awal/
+
+```
+
+### 2. Local Model Pulling via Ollama
+
+Ensure Ollama is running on the host machine and pull the required inference and embedding models:
+
+```bash
+ollama pull bge-m3:latest
+ollama pull gemma4:latest # or ollama pull gemma4:12b-it-qat if your hardware has more than 8GB VRAM
+
+```
+
+### 3. Build Vector Store & Run Memory Ingestion
+
+Execute the ingestion pipeline to parse documents via GOT-OCR 2.0 and index embedding vectors into the Qdrant `emi_knowledge` collection:
+
+```bash
+jupyter notebook mem_fill.ipynb
+
+```
+
+* **OCR & Table Preservation:** Scanned pages are automatically detected and structured into Markdown tables using GOT-OCR 2.0.
+* **Text Chunking:** Extracted texts are sliced into chunks ($1000$ characters with $200$ overlap).
+* **Vector Injection:** Chunks are vectorized using `bge-m3` and injected into Qdrant.
+* **State Checkpoint:** Ingestion progress is stored in `resume_log.json` to enable incremental updates.
+
+### 4. Database Schema Initialization
+
+The relational logging schema is initialized automatically upon starting the FastAPI backend, executing table creation for `chat_history`:
+
+```bash
+uvicorn emi_api:app --host 0.0.0.0 --port 8000
+
+```
+
 
 ---
 
