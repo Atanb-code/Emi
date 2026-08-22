@@ -50,7 +50,7 @@ Implementation and supplemental codebase for the research paper:
 ## ⚙️ System Requirements
 
 * **OS:** Linux (Ubuntu 22.04 LTS / WSL2)
-* **GPU Hardware:** NVIDIA GTX 1070 Ti / P104-100 (8 GB VRAM)
+* **GPU Hardware:** Any NVIDIA Pascal or newer GPUs with minimum 8GB VRAM (In this case using GTX 1070Ti + P104-100 8GB)
 
 
 * **Python Version:** $\ge 3.10$ (Tested on Python 3.12)
