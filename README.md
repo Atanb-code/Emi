@@ -217,7 +217,7 @@ Ensure Ollama is running on the host machine and pull the required inference and
 
 ```bash
 ollama pull bge-m3:latest
-ollama pull gemma4:latest # or ollama pull gemma4:12b-it-qat if your hardware has more than 8GB VRAM
+ollama pull gemma4:12b-it-qat # or ollama pull gemma4:latest if your hardware is very limited, like using Pascal or older era GPUs
 
 ```
 
