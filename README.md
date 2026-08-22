@@ -51,22 +51,12 @@ Implementation and supplemental codebase for the research paper:
 
 * **OS:** Linux (Ubuntu 22.04 LTS / WSL2)
 * **GPU Hardware:** Any NVIDIA Pascal or newer GPUs with minimum 8GB VRAM (In this case using GTX 1070Ti + P104-100 8GB)
-
-
 * **Python Version:** $\ge 3.10$ (Tested on Python 3.12)
-* **Underlying Services:**
+
+  **Underlying Services:**
 * [Ollama](https://ollama.com/) (Serving `gemma4:12b-it-qat` and `bge-m3:latest`)
-
-
 * [Qdrant Vector Database](https://qdrant.tech/) (Port `6333`)
-
-
 * [PostgreSQL](https://www.postgresql.org/) (Port `5432`)
-
-
-
-
-
 ---
 
 ## 🚀 Quickstart Guide
@@ -74,7 +64,7 @@ Implementation and supplemental codebase for the research paper:
 ### 1. Repository Setup
 
 ```bash
-git clone [https://github.com/](https://github.com/)Atanb-code/emi-health-assistant.git
+git clone https://github.com/Atanb-code/emi-health-assistant.git
 cd emi-health-assistant
 
 python3 -m venv venv
@@ -177,7 +167,7 @@ tailscale funnel --bg 8000
 tailscale funnel status
 
 ```
-*Expected output: `https://node-name.your-tailnet.ts.net*`
+*Expected output:* `https://node-name.your-tailnet.ts.net`
 
 ---
 
