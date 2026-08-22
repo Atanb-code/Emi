@@ -25,8 +25,8 @@ except Exception:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
     QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 
-MODEL_LLM = "gemma4:latest"
-IP_WINDOWS_LU = "127.0.0.1"
+MODEL_LLM = "gemma4:latest" # change the model depending on your needs and hardware specifications
+IP_WINDOWS = "127.0.0.1"
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -54,7 +54,7 @@ llm = ChatOllama(
     #}
 )
 
-embeddings = OllamaEmbeddings(base_url=f"http://{IP_WINDOWS_LU}:11434", model="bge-m3")
+embeddings = OllamaEmbeddings(base_url=f"http://{IP_WINDOWS}:11434", model="bge-m3")
 client = QdrantClient(url=QDRANT_URL, check_compatibility=False)        
 qdrant_store = QdrantVectorStore(client=client, collection_name="emi_knowledge", embedding=embeddings)  
 
