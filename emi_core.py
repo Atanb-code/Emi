@@ -25,7 +25,7 @@ except Exception:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
     QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 
-MODEL_LLM = "gemma4:12b-it-qat"
+MODEL_LLM = "gemma4:latest"
 IP_WINDOWS_LU = "127.0.0.1"
 
 load_dotenv()
