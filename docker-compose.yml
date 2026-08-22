@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # 🧠 INGATAN VEKTOR (Buat PDF & RAG)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: emi_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+    restart: unless-stopped
+
+  # 📝 INGATAN CHAT (PostgreSQL)
+  db:
+    image: postgres:15
+    container_name: emi_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      # This password MUST be the same with your .env file
+      POSTGRES_PASSWORD: ${DB_PASSWORD: "your_password"} 
+      POSTGRES_DB: db_name # you can change this but you must MATCH with .env ones
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
