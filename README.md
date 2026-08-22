@@ -35,7 +35,7 @@ Implementation and supplemental codebase for the research paper:
 │   └── banner.png          # Cover banner image for repository documentation
 ├── emi_core.py             # LangGraph orchestration, prompt templates, and retriever engine[cite: 9]
 ├── emi_api.py              # FastAPI service: Streaming endpoints, deduplication, and Postgres logging[cite: 9]
-├── streamlit_emi.py                  # Streamlit web interface with real-time TTS audio synthesis
+├── streamlit_emi.py        # Streamlit web interface with real-time TTS audio synthesis
 ├── mem_fill.ipynb          # Document ingestion pipeline (GOT-OCR 2.0 + Qdrant vector indexing)[cite: 8]
 ├── requirements.txt        # Production Python dependencies
 ├── .env.example            # Environment variable configuration template
