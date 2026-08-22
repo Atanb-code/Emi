@@ -193,7 +193,7 @@ Follow these steps to initialize collections and ingest municipal health profile
 
 ### 1. Document Preparation
 
-Create the source directory and deposit all reference PDF files (e.g., *Profil Kesehatan Kota Semarang 2024*, PTM clinical guidelines, or empirical health journals):
+Create the source directory and deposit all reference PDF files (e.g., *Profil Kesehatan Kota Semarang 2024*, NCD clinical guidelines, or empirical health journals):
 
 ```bash
 mkdir -p data_awal
