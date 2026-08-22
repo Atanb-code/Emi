@@ -100,8 +100,8 @@ DB_USER=emi
 DB_PASSWORD=your_password
 DB_HOST=127.0.0.1
 DB_PORT=5432
-OLLAMA_BASE_URL=[http://127.0.0.1:11434](http://127.0.0.1:11434)
-QDRANT_URL=[http://127.0.0.1:6333](http://127.0.0.1:6333)
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+QDRANT_URL=http://127.0.0.1:6333
 
 ```
 
@@ -284,7 +284,7 @@ Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$
 
 ## 📜 License & Ethics
 
-* **Source Code:** []()
+* **Source Code:** [License: Apache License ver 2](LICENSE)
 * **Research Dataset:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
 * **Ethical Compliance:** Survey data collection was conducted under explicit informed consent, anonymized in accordance with *Data in Brief* ethical guidelines.
 
