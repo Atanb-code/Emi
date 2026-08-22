@@ -5,7 +5,7 @@
 
 # Emi: An Edge-Based Self-Reflective RAG Health Assistant
 
-[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22038605-bluepastel)](https://doi.org/10.5281/zenodo.22038605)
+[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22038605-A9B2E9)](https://doi.org/10.5281/zenodo.22038605)
 [![License: Apache License ver 2](https://img.shields.io/badge/License-Apache_2-lightgray)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Python: 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green.svg)](https://fastapi.tiangolo.com/)
