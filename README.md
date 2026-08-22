@@ -33,13 +33,14 @@ Implementation and supplemental codebase for the research paper:
 ```text
 ├── docs/
 │   └── banner.png          # Cover banner image for repository documentation
-├── emi_core2.py            # LangGraph orchestration, prompt templates, and retriever engine[cite: 9]
-├── emi_api11.py            # FastAPI service: Streaming endpoints, deduplication, and Postgres logging[cite: 9]
+├── emi_core.py             # LangGraph orchestration, prompt templates, and retriever engine[cite: 9]
+├── emi_api.py              # FastAPI service: Streaming endpoints, deduplication, and Postgres logging[cite: 9]
 ├── app.py                  # Streamlit web interface with real-time TTS audio synthesis
-├── mem_fill_GOT_2.ipynb    # Document ingestion pipeline (GOT-OCR 2.0 + Qdrant vector indexing)[cite: 8]
+├── mem_fill.ipynb          # Document ingestion pipeline (GOT-OCR 2.0 + Qdrant vector indexing)[cite: 8]
 ├── requirements.txt        # Production Python dependencies
 ├── .env.example            # Environment variable configuration template
 ├── .gitignore              # Ignored cache, model binaries, and runtime artifacts[cite: 10]
+├── docker-compose.yml      # Docker container for Qdrant and PostgreSQL
 └── README.md               # Project documentation
 ```
 
