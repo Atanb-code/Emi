@@ -54,7 +54,7 @@ Implementation and supplemental codebase for the research paper:
 
 * **Python Version:** $\ge 3.10$ (Tested on Python 3.12)
 * **Underlying Services:**
-* [Ollama](https://ollama.com/) (Serving `gemma4:latest` and `bge-m3:latest`)
+* [Ollama](https://ollama.com/) (Serving `gemma4:12b-it-qat` and `bge-m3:latest`)
 
 
 * [Qdrant Vector Database](https://qdrant.tech/) (Port `6333`)
