@@ -35,7 +35,7 @@ Implementation and supplemental codebase for the research paper:
 │   └── banner.png          # Cover banner image for repository documentation
 ├── emi_core.py             # LangGraph orchestration, prompt templates, and retriever engine[cite: 9]
 ├── emi_api.py              # FastAPI service: Streaming endpoints, deduplication, and Postgres logging[cite: 9]
-├── app.py                  # Streamlit web interface with real-time TTS audio synthesis
+├── streamlit_emi.py                  # Streamlit web interface with real-time TTS audio synthesis
 ├── mem_fill.ipynb          # Document ingestion pipeline (GOT-OCR 2.0 + Qdrant vector indexing)[cite: 8]
 ├── requirements.txt        # Production Python dependencies
 ├── .env.example            # Environment variable configuration template
@@ -114,7 +114,7 @@ Emi relies on Docker to orchestrate the Vector Database (Qdrant) and Relational 
 **Ubuntu / WSL2:**
 ```bash
 # Install official Docker Engine
-curl -fsSL [https://get.docker.com](https://get.docker.com) -o get-docker.sh
+curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # Enable non-root Docker management
@@ -160,11 +160,11 @@ To deploy the Streamlit frontend publicly on **Streamlit Community Cloud** while
 
 1. Install and authenticate [Tailscale](https://tailscale.com/):
    ```bash
-   curl -fsSL [https://tailscale.com/install.sh](https://tailscale.com/install.sh) | sh
+   curl -fsSL https://tailscale.com/install.sh | sh
    sudo tailscale up
+   ```
 
-
-2. Enable **Funnel** in your [Tailscale Admin Console](https://www.google.com/search?q=https://login.tailscale.com/admin/features) under **Access Controls** (grant `funnel` attribute for your node).
+2. Enable **Funnel** in your [Tailscale Admin Console](https://tailscale.com/docs/features/tailscale-funnel) under **Access Controls** (grant `funnel` attribute for your node).
 
 3. Expose the local FastAPI port via Tailscale Funnel in background mode:
 ```bash
@@ -251,7 +251,7 @@ uvicorn emi_api:app --host 0.0.0.0 --port 8000
 
 Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$) are available on Zenodo:
 
-* **Zenodo DOI:** [10.5281/zenodo.22038605](https://www.google.com/url?sa=E&source=gmail&q=https://doi.org/10.5281/zenodo.22038605)
+* **Zenodo DOI:** [10.5281/zenodo.22038605](https://doi.org/10.5281/zenodo.22038605)
 
 * **Archived Files:**
 1. `1_Raw_Data_N20.csv` (TAM & SUS Survey Responses)
@@ -284,7 +284,7 @@ Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$
 
 ## 📜 License & Ethics
 
-* **Source Code:** [MIT License](https://www.google.com/search?q=LICENSE)
+* **Source Code:** []()
 * **Research Dataset:** [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
 * **Ethical Compliance:** Survey data collection was conducted under explicit informed consent, anonymized in accordance with *Data in Brief* ethical guidelines.
 
