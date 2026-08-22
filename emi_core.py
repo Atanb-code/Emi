@@ -25,7 +25,7 @@ except Exception:
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
     QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 
-MODEL_OPREKAN_LU = "gemma4:latest"
+MODEL_LLM = "gemma4:12b-it-qat"
 IP_WINDOWS_LU = "127.0.0.1"
 
 load_dotenv()
@@ -36,7 +36,7 @@ checkpointer = MemorySaver()
 
 llm = ChatOllama(
     base_url=OLLAMA_URL, 
-    model=MODEL_OPREKAN_LU,
+    model=MODEL_LLM,
     #stream=True, 
     num_batch=960,           
     num_thread=6,
