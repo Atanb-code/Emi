@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="docs/banner.png" alt="Emi Health Assistant Banner" width="100%">
+  <img src="docs/emi-banner.png" alt="Emi Health Assistant Banner" width="100%">
 </p>
 
 # Emi: An Edge-Based Self-Reflective RAG Health Assistant
