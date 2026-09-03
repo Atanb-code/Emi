@@ -1,11 +1,11 @@
 
 <p align="center">
-  <img src="docs/emi-banner.png" alt="Emi Health Assistant Banner" width="100%">
+  <img src="docs/banner.png" alt="Emi Health Assistant Banner" width="100%">
 </p>
 
 # Emi: An Edge-Based Self-Reflective RAG Health Assistant
 
-[![Zenodo DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22038605-A9B2E9)](https://doi.org/10.5281/zenodo.22038605)
+[![Zenodo DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22249913.svg)](https://doi.org/10.5281/zenodo.22249913)
 [![License: Apache License ver 2](https://img.shields.io/badge/License-Apache_2-lightgray)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Python: 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.136-green.svg)](https://fastapi.tiangolo.com/)
@@ -64,7 +64,7 @@ Implementation and supplemental codebase for the research paper:
 ### 1. Repository Setup
 
 ```bash
-git clone https://github.com/Atanb-code/emi.git
+git clone https://github.com/Atanb-code/emi-health-assistant.git
 cd emi-health-assistant
 
 python3 -m venv venv
@@ -193,7 +193,7 @@ Follow these steps to initialize collections and ingest municipal health profile
 
 ### 1. Document Preparation
 
-Create the source directory and deposit all reference PDF files (e.g., *Profil Kesehatan Kota Semarang 2024*, NCD clinical guidelines, or empirical health journals):
+Create the source directory and deposit all reference PDF files (e.g., *Profil Kesehatan Kota Semarang 2024*, PTM clinical guidelines, or empirical health journals):
 
 ```bash
 mkdir -p data_awal
@@ -241,7 +241,7 @@ uvicorn emi_api:app --host 0.0.0.0 --port 8000
 
 Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$) are available on Zenodo:
 
-* **Zenodo DOI:** [10.5281/zenodo.22038605](https://doi.org/10.5281/zenodo.22038605)
+* **Zenodo DOI:** [10.5281/zenodo.22249913](https://doi.org/10.5281/zenodo.22249913)
 
 * **Archived Files:**
 1. `1_Raw_Data_N20.csv` (TAM & SUS Survey Responses)
@@ -251,6 +251,7 @@ Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$
 5. `5_Hypothesis_Bootstrapping.csv` (Structural Path Modeling & Mediation)
 6. `6_DSR_Technical_Logs_N115.csv` (Latency, TTFT, and Accuracy Logs)
 7. `7_BlackBox_Safety_Test.csv` (Boundary Verification Test Cases)
+8. `8_Survey_translated.docx` (Translated Post-Interaction Questionaire)
 
 
 
@@ -265,7 +266,7 @@ Empirical interaction logs ($N=115$) and user acceptance evaluation data ($N=20$
   journal={Data in Brief},
   year={2026},
   publisher={Elsevier},
-  doi={10.5281/zenodo.22038605}
+  doi={10.5281/zenodo.22249913}
 }
 
 ```
