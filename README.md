@@ -64,7 +64,7 @@ Implementation and supplemental codebase for the research paper:
 ### 1. Repository Setup
 
 ```bash
-git clone https://github.com/Atanb-code/emi-health-assistant.git
+git clone https://github.com/Atanb-code/emi.git
 cd emi-health-assistant
 
 python3 -m venv venv
