@@ -65,7 +65,8 @@ Implementation and supplemental codebase for the research paper:
 Before you clone everything, make sure if python3, pip, and venv is installed in your system. If not, you can do this following
 ```bash
 # Update package list & install Python with its components
-
+sudo apt update
+sudo apt install -y python3 python3-pip python3-venv python3-dev git build-essential
 ```
 
 ```bash
