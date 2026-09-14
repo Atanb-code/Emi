@@ -62,13 +62,19 @@ Implementation and supplemental codebase for the research paper:
 ## 🚀 Quickstart Guide
 
 ### 1. Repository Setup
+Before you clone everything, make sure if python3, pip, and venv is installed in your system. If not, you can do this following
+```bash
+# Update package list & install Python with its components
+
+```
 
 ```bash
 git clone https://github.com/Atanb-code/emi.git
 cd emi
 
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv venv          # You can name your own venv such as 'emi-venv' or anything else.
+source [your-venv-name]/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 
 ```
