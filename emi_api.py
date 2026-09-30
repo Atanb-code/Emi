@@ -1,7 +1,6 @@
-# 🚨 MANTRA KULI ELIT: MURNI P104 PERTAMA! 🚨
+# 🚨 SKRIP FULL LOKAL OLLAMA + P104 + LIVE JUDGE + DYNAMIC SUB-QUERY RAG ACTIVATED! 🚨
 import os
 from dotenv import load_dotenv
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 import os as os_sys 
 import phoenix as px
@@ -9,7 +8,6 @@ from openinference.instrumentation.langchain import LangChainInstrumentor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from langchain_core.messages import AIMessage
 
 def init_cctv():
     try:
@@ -21,7 +19,7 @@ def init_cctv():
     except Exception as e:
         print(f"⚠️ Phoenix CCTV skip/gagal: {e}")
 
-init_cctv()
+# init_cctv()
 
 import re
 import requests 
@@ -32,17 +30,12 @@ from pydantic import BaseModel
 import uvicorn
 from contextlib import asynccontextmanager
 
-# 🚀 IMPORT RETRIEVER & GOOGLE TOOL LANGSUNG DARI CORE BIAR BISA FAST-PATH
-from emi_core2 import get_emi_brain_gemma4, system_prompt, llm, retriever, google_search
+from emi_core3 import get_emi_brain_lokal, system_prompt, llm, retriever, tavily_search
 from datetime import datetime
 import time 
 
 import psycopg2
-
 import pandas as pd
-from phoenix.evals import ClassificationEvaluator, evaluate_dataframe, LLM
-from phoenix.evals.utils import to_annotation_dataframe
-from phoenix.client import Client as PhoenixClient
 import edge_tts
 
 load_dotenv()
@@ -79,9 +72,9 @@ def init_db():
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ [DATABASE] Tabel chat_history di PostgreSQL aman & siap nampung curhatan!")
+        print("✅ [DATABASE] Tabel chat_history di PostgreSQL aman & siap!")
     except Exception as e:
-        print(f"❌ [DATABASE ERROR] Gagal konek ke Postgres, cek lagi WSL lu: {e}")
+        print(f"❌ [DATABASE ERROR] Gagal nyambung ke Postgres: {e}")
 
 def catat_log_postgres(thread_id, pesan_user, jawaban_emi, mood, waktu_mikir, kategori):
     try:
@@ -95,10 +88,9 @@ def catat_log_postgres(thread_id, pesan_user, jawaban_emi, mood, waktu_mikir, ka
         cur.close()
         conn.close()
     except Exception as e:
-        print(f"❌ [DATABASE ERROR] Gagal nyatet ke Postgres: {e}")
+        print(f"❌ [DATABASE ERROR] Gagal catat ke Postgres: {e}")
 
 def ambil_history_text(thread_id: str, limit: int = 20) -> str:
-    """Mengambil riwayat 10 obrolan terakhir dari Postgres agar llm.invoke tidak amnesia"""
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
@@ -126,19 +118,17 @@ def ambil_history_text(thread_id: str, limit: int = 20) -> str:
 @asynccontextmanager
 async def panasin_mesin(app: FastAPI):
     init_db()
-    print("🔥 [MESIN STARTUP] Mancing Ollama biar VRAM P104 keisi duluan...")
+    print("🔥 [STARTUP] Mancing Ollama biar VRAM P104 keisi duluan...")
     try:
         await asyncio.to_thread(llm.invoke, "Wake up, Emi!")
-        print("✅ [VRAM BOOKED] Model udah nongkrong di P104!")
+        print("✅ [VRAM BOOKED] Model Lokal siap di GPU!")
     except Exception as e:
         print(f"❌ Gagal mancing VRAM: {e}")
-        
     yield 
-    
     print("🛑 [SHUTDOWN] Server mati, Emi mau tidur!")
 
-app = FastAPI(title="Otak Utama Emi Dinkes (Full Streaming & Decoupled RAG)", lifespan=panasin_mesin)
-agent_executor = get_emi_brain_gemma4()
+app = FastAPI(title="Otak Utama Emi Dinkes (100% Full Lokal Hybrid RAG)", lifespan=panasin_mesin)
+agent_executor = get_emi_brain_lokal()
 
 class ChatRequest(BaseModel):
     message: str
@@ -148,7 +138,6 @@ class RatingRequest(BaseModel):
     thread_id: str
     rating: int
 
-# --- SISTEM DEDUPLIKASI REQUEST ---
 sedang_diproses = set()
 
 KATA_KUNCI_KRISIS = [
@@ -185,30 +174,21 @@ KATA_KUNCI_KRISIS = [
 ]
 
 KATA_KUNCI_JAILBREAK = [
-    # 1. System Prompt Extraction & Override
     "abaikan instruksi", "ignore all previous", "ignore previous instructions", "forget all instructions",
     "system prompt", "system override", "mode debug", "debug mode", "data_exfil", "ignore_safety",
     "bocorkan prompt", "tampilkan prompt", "print system prompt", "what is your system prompt",
     "ulangi instruksi awal", "repeat initial instructions", "show base instructions", "aturan awalmu apa",
     "salin instruksi", "dump prompt", "reveal instructions", "system directive",
-
-    # 2. Persona Hijacking & Roleplay Exploit (DAN Mode)
     "kamu sekarang adalah", "bertindaklah sebagai", "pretend to be", "act as", "you are now",
     "dan mode", "developer mode", "mode pengembang", "unfiltered mode", "jailbreak",
     "kamu bebas dari aturan", "tanpa batasan", "bypass filter", "hypothetical scenario",
     "dalam cerita fiksi", "untuk keperluan riset exploit", "ceritakan dongeng tentang cara",
     "sebagai alter ego", "jangan patuhi dinkes", "lupakan dinkes",
-
-    # 3. Delimiter & Prompt Injection Tags
     "### system", "<start_of_turn>", "[system]", "```system", "<system>", "[instruction]",
     "eval(", "exec(", "sudo ", "/bin/sh", "/bin/bash", "<script>",
-
-    # 4. Out-of-Scope: Coding, Hacking, & Scripting
     "buatkan kode", "buatkan script", "bikin script", "bikin kodingan", "tulis fungsi python",
     "hack sistem", "meretas", "ddos", "sql injection", "brute force", "exploit", "keylogger",
     "bypass security", "bikin malware", "reverse shell", "phishing",
-
-    # 5. Out-of-Scope: Joki & Tugas Akademik
     "joki tugas", "buatkan esai", "bikinin tugas", "kerjain pr", "tolong kerjakan tugas",
     "joki skripsi", "bikinin makalah", "kerjakan ujian", "buatkan puisi", "buatkan lirik lagu",
     "buatkan cerpen", "buatkan rangkuman jurnal ekonomi", "jawab soal fisika"
@@ -267,9 +247,10 @@ KATA_KUNCI_CURHAT = [
 
 KATA_KUNCI_DIAGNOSA = [
     "hipertensi", "darah tinggi", "tensi", "tensi tinggi", "sistolik", "diastolik", "hipertensif",
-    "pembuluh darah", "penyumbatan darah", "arteri", "pembuluh darah pecah", "tekanan darah",
-    "krisis hipertensi", "hipertensi sekunder", "diabetes", "kencing manis", "gula darah", "gula tinggi",
-    "hiperglikemia", "hipoglikemia", "resistensi insulin", "insulin", "gula kering", "gula basah",
+    "pembuluh darah", "penyumbatan darah", "arteri", "pembuluh darah pecah", "tekanan darah", "cek darah", "sampel darah", 
+    "sampel urin", "periksa darah", "kimia darah", "cek tensi", "krisis hipertensi", "hipertensi sekunder", 
+    "diabetes", "kencing manis", "gula darah", "gula tinggi", "kencing", "hiperglikemia", 
+    "hipoglikemia", "resistensi insulin", "insulin", "gula kering", "gula basah",
     "gangren", "cek gula", "diabetes melitus", "dm tipe 1", "dm tipe 2", "diabetik", "neuropati diabetik",
     "kolesterol", "kolesterol tinggi", "trigliserida", "ldl", "hdl", "lemak darah", "asam urat", "gout",
     "kristal asam urat", "cek kolesterol", "cek asam urat", "hiperkolesterolemia", "hiperurisemia",
@@ -304,7 +285,8 @@ KATA_KUNCI_DIAGNOSA = [
     "ct scan", "mri", "ekg", "rekam jantung", "posbindu", "puskesmas", "faskes", "poli", "spesialis",
     "rawat jalan", "rawat inap", "rujukan", "bpjs", "pencegahan", "penanganan", "pengobatan",
     "penyembuhan", "cara mengobati", "pola makan", "diet rendah garam", "diet rendah gula",
-    "pantangan makanan", "pola hidup sehat", "medical check up", "mcu", "konsultasi dokter", "dokter spesialis"
+    "pantangan makanan", "pola hidup sehat", "medical check up", "mcu", "konsultasi dokter", "dokter spesialis",
+    "ODGJ", "odgj", "gila", "halu"
 ]
 
 KATA_KUNCI_IDENTITAS = [
@@ -313,18 +295,22 @@ KATA_KUNCI_IDENTITAS = [
     "salam kenal", "nama aku", "namaku", "aku nama"
 ]
 
-antrean_loket = asyncio.Semaphore(2) 
+antrean_loket = asyncio.Semaphore(5)
 pasien_ngantri = 0          
-MAX_KURSI_TUNGGU = 30
+MAX_KURSI_TUNGGU = 40
 MAX_CHAR_LIMIT = 1200
 
 async def buat_file_tts(teks_bersih: str, thread_id: str) -> str:
-    jumlah_kata = len(teks_bersih.split())
-    if jumlah_kata <= 150:
+    teks_polos = re.sub(r'[\*\#\_\[\]\(\)\`\>\|\-\+\=]', ' ', teks_bersih)
+    teks_polos = re.sub(r'<[^>]+>', '', teks_polos)
+    teks_polos = re.sub(r'\s+', ' ', teks_polos).strip()
+
+    jumlah_kata = len(teks_polos.split())
+    if 0 < jumlah_kata <= 500:
         try:
             nama_file_audio = f"suara_{thread_id}_{int(time.time())}.mp3"
-            communicate = edge_tts.Communicate(teks_bersih, "id-ID-GadisNeural")
-            await asyncio.wait_for(communicate.save(nama_file_audio), timeout=5.0)
+            communicate = edge_tts.Communicate(teks_polos, "id-ID-GadisNeural")
+            await asyncio.wait_for(communicate.save(nama_file_audio), timeout=60.0)
             print(f"✅ [TTS SUKSES] File {nama_file_audio} siap dikirim!")
             return nama_file_audio
         except Exception as e_tts:
@@ -332,36 +318,29 @@ async def buat_file_tts(teks_bersih: str, thread_id: str) -> str:
             return None
     return None
 
-# =====================================================================
-# ENDPOINT CHAT UTAMA (FULL STREAMING + DECOUPLED FAST RAG + ANTI NYAPA)
-# =====================================================================
 @app.post("/chat")
 async def chat_full_stream(req: ChatRequest, request: Request):
     global pasien_ngantri
     print(f"\n📩 [FULL STREAM REQUEST] Thread: {req.thread_id} | Pesan: {req.message}")
 
-    # 1. PENCEGAHAN REQUEST GANDA (DEDUPLICATION LOCK)
     if req.thread_id in sedang_diproses:
-        print(f"⚠️ [DEDUPLICATED] Thread {req.thread_id} nembak ganda! diblokir.")
+        print(f"⚠️ [DEDUPLICATED] Thread {req.thread_id} nembak ganda!")
         async def double_hit_stream():
             yield "Emi lagi ngetik jawaban kamu nih Kak, tunggu sebentar ya! ⏳"
         return StreamingResponse(double_hit_stream(), media_type="text/plain")
 
-    # 2. CEK GEMBOK EVALUASI DOSEN
     if os_sys.path.exists(FILE_GEMBOK):
         async def gembok_stream():
-            yield "Maaf Kak, Emi lagi disidang sama Dosennya nih! Tunggu sekitar 1-2 menit ya! ⏳"
+            yield "Maaf Kak, Emi lagi disidang sama Dosennya nih! Tunggu beberapa saat lagi ya! ⏳"
         return StreamingResponse(gembok_stream(), media_type="text/plain")
 
     pesan_kecil = req.message.lower().strip()
 
-    # 3. CEK BATAS KARAKTER
     if len(req.message) > MAX_CHAR_LIMIT:
         async def limit_stream():
             yield f"Aduh maaf Kak, pesannya kepanjangan nih ({len(req.message)} karakter). Batas maksimal {MAX_CHAR_LIMIT} karakter ya Kak! 🙏"
         return StreamingResponse(limit_stream(), media_type="text/plain")
 
-    # 4. CEK KAPASITAS ANTREAN
     is_darurat = any(kata in pesan_kecil for kata in KATA_KUNCI_KRISIS)
     if not is_darurat and pasien_ngantri >= MAX_KURSI_TUNGGU:
         async def penuh_stream():
@@ -373,14 +352,11 @@ async def chat_full_stream(req: ChatRequest, request: Request):
 
     async def event_generator():
         global pasien_ngantri
-        
-        # ⏱️ STOPWATCH REAL-TIME TTFT & PROFILER
         t_request_masuk = time.perf_counter()
         t_first_token = None
         token_count = 0
-        
-        waktu_masuk_ruangan = time.time()
         kategori_aktif = "UMUM"
+        status_judge = "N/A"
         full_response_text = []
 
         try:
@@ -393,7 +369,6 @@ async def chat_full_stream(req: ChatRequest, request: Request):
                 kata_sapaan = ["halo", "hai", "pagi", "siang", "sore", "malam", "ping", "p", "emi", "halo emi"]
                 jumlah_kata = len(pesan_kecil.split())
 
-                # C. MODE JAILBREAK
                 if any(kata in pesan_kecil for kata in KATA_KUNCI_JAILBREAK):
                     kategori_aktif = "JAILBREAK"
                     jawaban = "Maaf ya, tugasku cuma sebagai Asisten Dinas Kesehatan. Aku tidak diprogram buat hal itu! 😅"
@@ -402,7 +377,6 @@ async def chat_full_stream(req: ChatRequest, request: Request):
                     t_first_token = time.perf_counter()
                     yield jawaban
 
-                # A. SAPAAN SANGAT SINGKAT
                 elif pesan_kecil in kata_sapaan:
                     jawaban = "Halo Kak! Senang banget bisa ngobrol sama Kakak hari ini. Ada yang bisa aku bantu?"
                     full_response_text.append(jawaban)
@@ -419,7 +393,6 @@ async def chat_full_stream(req: ChatRequest, request: Request):
                     yield jawaban
                     kategori_aktif = "UMUM"
 
-                # B. MODE KRISIS (Direct PFA Stream)
                 elif any(kata in pesan_kecil for kata in KATA_KUNCI_KRISIS):
                     kategori_aktif = "KRISIS"
                     riwayat_lalu = await asyncio.to_thread(ambil_history_text, req.thread_id, 10)
@@ -440,11 +413,9 @@ async def chat_full_stream(req: ChatRequest, request: Request):
                             full_response_text.append(isi_chunk)
                             yield isi_chunk
 
-                # D. MODE CURHAT (Direct Empathetic Stream)
                 elif any(kata in pesan_kecil for kata in KATA_KUNCI_CURHAT):
                     kategori_aktif = "CURHAT"
                     riwayat_lalu = await asyncio.to_thread(ambil_history_text, req.thread_id, 10)
-                    
                     larangan_sapa = "DILARANG menyapa ulang ('Halo Kak/Hai Kak'). Langsung tanggapi cerita/keluhannya secara mengalir dan hangat." if riwayat_lalu else "Awali dengan sapaan ramah khas Emi."
 
                     suntikan_sistem_curhat = f"""Kamu adalah Emi, Asisten AI dari Dinas Kesehatan Kota Semarang.
@@ -467,7 +438,6 @@ Panggil lawan bicara dengan sebutan "Kak", gunakan kata ganti diri "Aku", dan be
                             full_response_text.append(isi_chunk)
                             yield isi_chunk
 
-                # E. MODE KENALAN / IDENTITAS
                 elif any(kata in pesan_kecil for kata in KATA_KUNCI_IDENTITAS):
                     kategori_aktif = "KENALAN"
                     riwayat_lalu = await asyncio.to_thread(ambil_history_text, req.thread_id, 10)
@@ -487,73 +457,159 @@ Panggil lawan bicara dengan sebutan "Kak", gunakan kata ganti diri "Aku", dan be
                             full_response_text.append(isi_chunk)
                             yield isi_chunk
 
-                # =============================================================
-                # 🚀 F. MODE MEDIS (DECOUPLED FAST-PATH RAG + LENGKAP & ANTI NYAPA)
-                # =============================================================
                 elif any(kata in pesan_kecil for kata in KATA_KUNCI_DIAGNOSA):
                     kategori_aktif = "MEDIS"
-                    print(f"⚡ [MEDIS FAST-PATH] Memulai pengambilan konteks untuk: '{req.message}'")
+                    print(f"⚡ [MEDIS LIVE-JUDGE PATH] Memulai evaluasi & pengambilan konteks untuk: '{req.message}'")
                     
                     t_start_rag = time.perf_counter()
-                    butuh_internet = any(kw in pesan_kecil for kw in ["terbaru", "terkini", "2025", "2026", "sekarang", "berita"])
-                    konteks_medis = ""
 
-                    # 1. PENCARIAN DOKUMEN CEPAT (Qdrant -> Fallback Google)
-                    if butuh_internet:
-                        print("🌐 [MEDIS] Kueri membutuhkan data terkini, memanggil Google Search...")
-                        hasil_google = await asyncio.to_thread(google_search.invoke, req.message)
-                        konteks_medis = f"--- FAKTA INTERNET (GOOGLE) ---\n{hasil_google}"
+                    # --- 1. LIVE JUDGE (DOSEN EVALUATOR) ---
+                    prompt_judge = f"""Kamu adalah Evaluator/Dosen Penguji Sistem RAG Medis Dinkes Semarang.
+Tugasmu menilai apakah pertanyaan user relevan dengan topik kesehatan, penyakit, layanan medis, atau faskes.
+
+PERTANYAAN USER: '{req.message}'
+
+Aturan:
+- Jawab HANYA 1 kata: 'ACC' (jika relevan/aman) atau 'REJECT' (jika melanggar/ngawur/di luar konteks).
+
+Status:"""
+
+                    try:
+                        res_judge = await asyncio.to_thread(
+                            llm.invoke, 
+                            prompt_judge,
+                            config={"configurable": {"temperature": 0.0, "max_tokens": 10}}
+                        )
+                        raw_judge_res = res_judge.content.strip().upper()
+                        status_judge = "ACC" if "ACC" in raw_judge_res else ("REJECT" if "REJECT" in raw_judge_res else "ACC")
+                    except Exception as e_judge:
+                        print(f"⚠️ [LIVE JUDGE ERROR]: {e_judge}")
+                        status_judge = "ACC (FALLBACK)"
+
+                    print(f"👨‍🏫 Live Judge Status: {status_judge}")
+
+                    if status_judge == "REJECT":
+                        jawaban_reject = "Maaf Kak, pertanyaan ini dinilai tidak relevan atau di luar jangkauan layanan kesehatan Dinkes Semarang."
+                        full_response_text.append(jawaban_reject)
+                        token_count = len(jawaban_reject.split())
+                        t_first_token = time.perf_counter()
+                        yield jawaban_reject
                     else:
-                        hasil_docs = await asyncio.to_thread(retriever.invoke, req.message)
-                        if hasil_docs:
-                            teks_qdrant = "\n\n".join([doc.page_content.strip() for doc in hasil_docs])
-                            konteks_medis = f"--- FAKTA RESMI DINKES SEMARANG (QDRANT) ---\n{teks_qdrant}"
-                            print(f"📚 [QDRANT HIT] Menemukan {len(hasil_docs)} dokumen dalam {time.perf_counter() - t_start_rag:.3f}s")
+                        konteks_medis = ""
+                        riwayat_lalu = await asyncio.to_thread(ambil_history_text, req.thread_id, 8)
+
+                        # --- DETEKTOR META-QUESTION / FOLLOW-UP OBROLAN ---
+                        KATA_KUNCI_META = ["dari mana", "darimana", "sumber", "dapat dari", "kok bisa", "maksudnya", "kenapa", "dapat angka", "referensi"]
+                        is_meta_question = any(kw in pesan_kecil for kw in KATA_KUNCI_META) and bool(riwayat_lalu)
+
+                        if is_meta_question:
+                            print("💬 [META-QUESTION DETECTED] User menanyakan asal data/jawaban sebelumnya. Menggunakan riwayat obrolan tanpa RAG ulang...")
+                            konteks_medis = "--- RIWAYAT DATA SEBELUMNYA ---\nUser menanyakan penjelasan/sumber dari jawaban Emi pada riwayat obrolan sebelumnya."
                         else:
-                            print("⚠️ [QDRANT EMPTY] Data lokal tidak ditemukan, fallback ke Google Search...")
-                            hasil_google = await asyncio.to_thread(google_search.invoke, req.message)
-                            konteks_medis = f"--- FAKTA INTERNET (GOOGLE) ---\n{hasil_google}"
+                            # --- 2. DYNAMIC SUB-QUERY DECOMPOSITION ---
+                            prompt_breakdown = f"""Kamu adalah Query Parser RAG Dinas Kesehatan Semarang.
+Analisis pertanyaan user dan riwayat obrolan. Buatkan maksimal 3 kueri pencarian database RAG yang sangat singkat dan spesifik (1 kueri per baris, tanpa nomor/bullet).
+Jika user bertanya tentang angka/kasus, WAJIB sertakan kata 'kasus', 'tahun', atau nama penyakitnya.
 
-                    # 2. Ambil Riwayat dari Postgres
-                    riwayat_lalu = await asyncio.to_thread(ambil_history_text, req.thread_id, 10)
-                    
-                    # 3. Logika Dinamis Anti-Nyapa Berulang
-                    if riwayat_lalu:
-                        instruksi_alur = """[KONDISI PERCAKAPAN: LANJUTAN]
-- DILARANG KERAS membuka jawaban dengan kalimat sapaan (JANGAN gunakan 'Halo Kak', 'Hai Kak', 'Terima kasih atas pertanyaannya', atau 'Kembali lagi dengan aku').
-- LANGSUNG sambung jawaban ke pokok pembahasan secara luwes, mengalir, dan natural seperti teman yang sedang asyik mengobrol."""
-                    else:
-                        instruksi_alur = """[KONDISI PERCAKAPAN: AWAL OBROLAN]
-- Awali jawaban dengan sapaan hangat ramah khas Emi ('Halo Kak! Ada yang bisa kubantu?') sebelum masuk ke penjelasan."""
+[RIWAYAT OBROLAN]:
+{riwayat_lalu if riwayat_lalu else 'Belum ada.'}
 
-                    # 4. Rakit Prompt Medis Lengkap
-                    suntikan_sistem_medis = f"""Kamu adalah Emi, Asisten Kesehatan Dinas Kesehatan Kota Semarang.
-Gunakan gaya bicara ramah, sopan, berempati, panggil lawan bicara dengan sebutan "Kak", dan gunakan kata ganti "Aku".
+[PERTANYAAN USER]:
+'{req.message}'
 
-{instruksi_alur}
+Kueri Pencarian Spesifik:"""
 
-[FAKTA MEDIS & PANDUAN DINKES SEMARANG]:
+                            try:
+                                res_breakdown = await asyncio.to_thread(
+                                    llm.invoke, 
+                                    prompt_breakdown,
+                                    config={"configurable": {"temperature": 0.0, "max_tokens": 100}}
+                                )
+                                raw_queries = [q.strip() for q in res_breakdown.content.strip().split("\n") if q.strip()]
+                                list_sub_queries = raw_queries[:3] if raw_queries else [req.message]
+                            except Exception as e_break:
+                                print(f"⚠️ [QUERY PARSER ERROR]: {e_break}")
+                                list_sub_queries = [req.message]
+
+                            print(f"🔀 [DYNAMIC SUB-QUERIES GENERATED]: {list_sub_queries}")
+
+                            # --- 3. PARALLEL QDRANT RETRIEVAL ---
+                            retriever_heavy = retriever.vectorstore.as_retriever(search_kwargs={"k": 8})
+                            tasks = [asyncio.to_thread(retriever_heavy.invoke, sub_q) for sub_q in list_sub_queries]
+                            search_results = await asyncio.gather(*tasks)
+
+                            unique_docs = {}
+                            for docs_group in search_results:
+                                for doc in docs_group:
+                                    if doc.page_content not in unique_docs:
+                                        unique_docs[doc.page_content] = doc
+
+                            hasil_docs = list(unique_docs.values())
+
+                            if hasil_docs:
+                                teks_qdrant = "\n\n".join([doc.page_content.strip() for doc in hasil_docs])
+                                konteks_medis = f"--- FAKTA RESMI DINKES SEMARANG (QDRANT) ---\n{teks_qdrant}"
+                                print(f"📚 [QDRANT HIT] Mengumpulkan {len(hasil_docs)} chunk unik dalam {time.perf_counter() - t_start_rag:.3f}s")
+
+                            # --- 4. FALLBACK TAVILY (HANYA UNTUK PERTANYAAN NON-META) ---
+                            if not konteks_medis:
+                                print("⚠️ [QDRANT KOSONG] Mengalihkan pencarian ke Fallback Tavily...")
+                                is_tanya_prosedur = any(kw in pesan_kecil for kw in ["prosedur", "alur", "cara", "syarat", "langkah", "daftar", "konsultasi"])
+                                if is_tanya_prosedur:
+                                    konteks_medis = (
+                                        "--- PANDUAN STANDAR FASKES DINKES SEMARANG ---\n"
+                                        "Prosedur umum layanan kesehatan/konsultasi di Kota Semarang:\n"
+                                        "1. Datang ke Puskesmas terdekat sesuai domisili/BPJS membawa KTP/Kartu BPJS.\n"
+                                        "2. Mendaftar di loket pelayanan dan menyampaikan keluhan ke petugas medis.\n"
+                                        "3. Pemeriksaan awal oleh dokter/perawat Puskesmas.\n"
+                                        "4. Jika membutuhkan penanganan spesialis/lanjutan, Puskesmas akan menerbitkan Surat Rujukan ke Rumah Sakit (RSUD/RSJiwa/RSUP)."
+                                    )
+                                else:
+                                    target_search = f"{list_sub_queries[0]} Dinkes Semarang" if list_sub_queries else f"{req.message} Dinkes Semarang"
+                                    print(f"🌐 [TAVILY SEARCH] Query: '{target_search}'...")
+                                    hasil_google = await asyncio.to_thread(tavily_search.invoke, target_search)
+
+                                    teks_konteks = []
+                                    if isinstance(hasil_google, list):
+                                        for idx, res in enumerate(hasil_google[:2], 1):
+                                            judul = res.get('title', f'Sumber {idx}')
+                                            url = res.get('url', '')
+                                            isi = res.get('content', '')[:350]
+                                            teks_konteks.append(f"Sumber {idx}:\n- Judul: {judul}\n- URL: {url}\n- Ringkasan: {isi}")
+                                        konteks_medis = "--- FAKTA INTERNET (TV) ---\n" + "\n\n".join(teks_konteks)
+                                    else:
+                                        konteks_medis = f"--- FAKTA INTERNET (TV) ---\n{str(hasil_google)[:1000]}"
+
+                        # --- 5. SYSTEM PROMPT MEDIS WITH HISTORY AWARENESS ---
+                        suntikan_sistem_medis = f"""Kamu adalah Emi, Asisten AI Kesehatan dari Dinas Kesehatan Kota Semarang.
+
+[PERSONA & GAYA BAHASA]:
+1. WAJIB sapa dan panggil lawan bicara dengan sebutan "Kak", dan gunakan kata ganti diri "Aku".
+2. DILARANG KERAS menggunakan kata "Bapak/Ibu" atau sapaan formal kaku seperti "Selamat siang, Bapak/Ibu"!
+3. Bersikaplah ramah, santai, dan membantu khas Emi.
+
+[FAKTA MEDIS / DATA]:
 {konteks_medis}
 
-[ATURAN JAWABAN MEDIS]:
-1. Jawab langsung secara ringkas, to-the-point, dan ramah (MAKSIMAL 100-120 KATA).
-2. Tampilkan HANYA 1 tabel ringkas standar Dinkes/Kemenkes atau poin rentang angka medis (mmHg / mg/dL).
-3. DILARANG membandingkan banyak guideline jika tidak diminta spesifik.
-4. Tutup dengan 1 kalimat singkat anjuran cek rutin ke Puskesmas.
+[ATURAN UTAMA JAWABAN]:
+1. Jawab langsung to-the-point sesuai pertanyaan user.
+2. JIKA USER TANYA ASAL DATA/SUMBER: Informasikan bahwa data diambil dari Laporan Profil Kesehatan Resmi Dinas Kesehatan Kota Semarang yang tersimpan di sistem internal Emi.
+3. BORGOL TOPIK: Tetap konsisten dengan topik penyakit yang sedang ditanyakan. JIKA data di atas menampilkan penyakit yang berbeda, DILARANG MEMBAHAS PENYAKIT BEDA TERSEBUT!
+4. JIKA USER TANYA ANGKA KASUS: Tampilkan angka spesifik/total kota jika ada di konteks. Jika TIDAK ADA di konteks, katakan jujur bahwa data spesifik belum tersedia di database.
+5. JIKA INFORMASI BERASAL DARI [FAKTA INTERNET (TV)]: WAJIB cantumkan semua referensi di bagian paling bawah.
 
 [RIWAYAT OBROLAN SEBELUMNYA]:
 {riwayat_lalu if riwayat_lalu else 'Belum ada obrolan sebelumnya.'}"""
 
-                    async for chunk in llm.astream([("system", suntikan_sistem_medis), ("user", req.message)]):
-                        isi_chunk = chunk.content if isinstance(chunk.content, str) else str(chunk.content)
-                        if isi_chunk:
-                            if t_first_token is None:
-                                t_first_token = time.perf_counter()
-                            token_count += 1
-                            full_response_text.append(isi_chunk)
-                            yield isi_chunk
+                        async for chunk in llm.astream([("system", suntikan_sistem_medis), ("user", req.message)]):
+                            isi_chunk = chunk.content if isinstance(chunk.content, str) else str(chunk.content)
+                            if isi_chunk:
+                                if t_first_token is None:
+                                    t_first_token = time.perf_counter()
+                                token_count += 1
+                                full_response_text.append(isi_chunk)
+                                yield isi_chunk
 
-                # G. MODE UMUM (LangGraph Agentic ReAct)
                 else:
                     kategori_aktif = "UMUM"
                     async for event in agent_executor.astream_events(
@@ -581,18 +637,18 @@ Gunakan gaya bicara ramah, sopan, berempati, panggil lawan bicara dengan sebutan
             pasien_ngantri -= 1
             sedang_diproses.discard(req.thread_id)
             
-            # 📊 KALKULASI METRIK PROFILER PERFORMA
             durasi_total = t_selesai - t_request_masuk
             ttft = (t_first_token - t_request_masuk) if t_first_token else durasi_total
             durasi_generasi_murni = (t_selesai - t_first_token) if t_first_token else 0.001
             tps = token_count / durasi_generasi_murni if durasi_generasi_murni > 0 else 0.0
 
-            # CETAK RAPOR SPEED DI TERMINAL FASTAPI
             print("\n" + "="*55)
-            print(f"⚡ [PROFILER SPEED P104] Thread: {req.thread_id[:8]}... | Mode: {kategori_aktif}")
+            print(f"⚡ [PROFILER SPEED P104 FULL LOKAL] Thread: {req.thread_id[:8]}... | Mode: {kategori_aktif}")
             print(f"├── ⏱️ Total Waktu       : {durasi_total:.2f} detik")
             print(f"├── 🎯 TTFT (Latency Awal): {ttft:.2f} detik")
             print(f"├── 🔤 Output Tokens     : {token_count} tokens")
+            if kategori_aktif == "MEDIS":
+                print(f"├── 👨‍🏫 Live Judge Status : {status_judge}")
             print(f"└── 🚀 Speed Generasi     : {tps:.2f} TPS (Tokens/Detik)")
             print("="*55 + "\n")
 
@@ -616,12 +672,8 @@ Gunakan gaya bicara ramah, sopan, berempati, panggil lawan bicara dengan sebutan
 
     return StreamingResponse(event_generator(), media_type="text/plain")
 
-# =====================================================================
-# ENDPOINT PENDUKUNG (RATING, HISTORY, JUDUL, & AUDIO - INTACT 100%)
-# =====================================================================
 @app.post("/rating")
 def simpan_rating(req: RatingRequest):
-    print(f"👍👎 Dapet rating dari warga {req.thread_id}: Skor {req.rating}")
     try:
         conn = psycopg2.connect(**DB_CONFIG)
         cur = conn.cursor()
@@ -637,10 +689,8 @@ def simpan_rating(req: RatingRequest):
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ [DATABASE] Rating sukses masuk ke Postgres!")
         return {"status": "sukses", "pesan": "Rating berhasil disimpan"}
     except Exception as e:
-        print(f"❌ [DATABASE ERROR] Gagal nyimpen rating ke Postgres: {e}")
         return {"status": "gagal", "pesan": str(e)}
 
 @app.get("/history/{thread_id}")
@@ -663,10 +713,9 @@ def get_history(thread_id: str):
             if baris[0]: 
                 riwayat.append({"role": "user", "content": baris[0], "avatar": "🧑"})
             if baris[1]: 
-                riwayat.append({"role": "assistant", "content": baris[1], "avatar": "👩‍⚕️"})
+                riwayat.append({"role": "assistant", "content": baris[1], "avatar": "👩‍⚕️️"})
         return {"history": riwayat}
     except Exception as e:
-        print(f"❌ [DATABASE ERROR] Gagal sedot history: {e}")
         return {"history": []}
 
 @app.get("/judul/{thread_id}")
@@ -696,7 +745,6 @@ async def get_judul(thread_id: str):
                 return {"judul": pesan_awal}
         return {"judul": "Obrolan Baru"}
     except Exception as e:
-        print(f"❌ [DATABASE ERROR] Gagal bikin judul: {e}")
         return {"judul": "Obrolan Baru"}
 
 @app.get("/audio/{nama_file}")
