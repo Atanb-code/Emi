@@ -214,18 +214,14 @@ Ensure Ollama is running on the host machine and pull the required inference and
 
 ```bash
 ollama pull bge-m3:latest
-ollama pull gemma4:12b-it-qat # or ollama pull gemma4:latest if your hardware is very limited, like using Pascal or older era GPUs
+ollama pull gemma4:12b-it-qat # or ollama pull gemma4:latest if your hardware is very limited, like using Pascal or older-era GPUs
 
 ```
 
 ### 3. Build Vector Store & Run Memory Ingestion
 
-Execute the ingestion pipeline to parse documents via GOT-OCR 2.0 and index embedding vectors into the Qdrant `emi_knowledge` collection:
-
-```bash
-jupyter notebook mem_fill.ipynb
-
-```
+Since this runs via local Google Colab, follow this [guidebook](https://research.google.com/colaboratory/local-runtimes.html) on how to run Jupyter locally 
+Then, copy the whole `emi_memory_fill.ipynb` into your script in your Colab notebook and execute the ingestion pipeline to parse documents via GOT-OCR 2.0 and index embedding vectors into the Qdrant `emi_knowledge` collection.
 
 * **OCR & Table Preservation:** Scanned pages are automatically detected and structured into Markdown tables using GOT-OCR 2.0.
 * **Text Chunking:** Extracted texts are sliced into chunks ($1000$ characters with $200$ overlap).
